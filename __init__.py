@@ -1,26 +1,13 @@
 from __future__ import annotations
 
-import typing as t
-
-from .extension import SQLAlchemy
-
-__all__ = [
-    "SQLAlchemy",
-]
+__version__ = "25.2"
 
 
-def __getattr__(name: str) -> t.Any:
-    if name == "__version__":
-        import importlib.metadata
-        import warnings
+def main(args: list[str] | None = None) -> int:
+    """This is an internal API only meant for use by pip's own console scripts.
 
-        warnings.warn(
-            "The '__version__' attribute is deprecated and will be removed in"
-            " Flask-SQLAlchemy 3.2. Use feature detection or"
-            " 'importlib.metadata.version(\"flask-sqlalchemy\")' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return importlib.metadata.version("flask-sqlalchemy")
+    For additional details, see https://github.com/pypa/pip/issues/7498.
+    """
+    from pip._internal.utils.entrypoints import _wrapper
 
-    raise AttributeError(name)
+    return _wrapper(args)
