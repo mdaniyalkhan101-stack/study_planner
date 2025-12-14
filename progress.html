@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Update Progress{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Back Button -->
+            <a href="{{ url_for('tasks') }}" class="btn btn-secondary mb-4">
+                <i class="fas fa-arrow-left me-2"></i> Back to Tasks
+            </a>
+
+            <!-- Task Progress Card -->
+            <div class="card shadow-lg mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i> Update Task Progress
+                        </h4>
+                        <span class="badge {{ task.get_priority_class() }}">
+                            {{ task.priority }} Priority
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Task Details -->
+                    <div class="mb-4">
+                        <h3 class="text-accent mb-3">{{ task.title }}</h3>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-book me-2 text-info"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Subject</small>
+                                        <strong>{{ task.subject or 'N/A' }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-alt me-2 {{ 'text-danger' if is_overdue else 'text-success' }}"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Due Date</small>
+                                        <strong>{{ task.due_date.strftime('%b %d, %Y') }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-clock me-2 text-warning"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Estimated Hours</small>
+                                        <strong>{{ task.estimated_hours | round(1) }} hrs</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Overdue Warning -->
+                        {% if is_overdue %}
+                        <div class="alert alert-danger d-flex align-items-center" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2 fa-2x"></i>
+                            <div>
+                                <strong>Task Overdue!</strong><br>
+                                This task was due {{ task.due_date.strftime('%b %d, %Y') }}. Complete it as soon as possible!
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Current Progress Display -->
+                        <div class="text-center my-4 p-4 rounded" style="background: rgba(139, 92, 246, 0.1);">
+                            <h5 class="text-muted mb-2">Current Progress</h5>
+                            <div class="display-3 fw-bold text-accent mb-3">{{ task.progress_percent }}%</div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{ task.get_progress_color() }}" 
+                                     role="progressbar" 
+                                     style="width: {{ task.progress_percent }}%;" 
+                                     aria-valuenow="{{ task.progress_percent }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ task.progress_percent }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Update Form -->
+                    <form method="POST" action="{{ url_for('update_progress', task_id=task.id) }}">
+                        <div class="mb-4">
+                            <label for="progress_percent" class="form-label">
+                                <i class="fas fa-sliders-h me-2"></i> Update Progress Percentage
+                            </label>
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-8">
+                                    <input type="range" 
+                                           class="form-range" 
+                                           id="progress_percent" 
+                                           name="progress_percent" 
+                                           min="0" 
+                                           max="100" 
+                                           step="5" 
+                                           value="{{ task.progress_percent }}"
+                                           oninput="updateProgressValue(this.value)">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" 
+                                           class="form-control form-control-lg text-center fw-bold" 
+                                           id="progress_value_display" 
+                                           min="0" 
+                                           max="100" 
+                                           value="{{ task.progress_percent }}"
+                                           onchange="updateProgressSlider(this.value)"
+                                           style="font-size: 1.5rem;">
+                                </div>
+                            </div>
+                            <div class="form-text">Drag the slider or enter a value between 0 and 100</div>
+                        </div>
+
+                        <!-- Quick Progress Buttons -->
+                        <div class="mb-4">
+                            <label class="form-label">Quick Updates:</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setProgress(25)">25%</button>
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setProgress(50)">50%</button>
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setProgress(75)">75%</button>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="setProgress(100)">
+                                    <i class="fas fa-check-circle me-1"></i> Complete
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i> Save Progress
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Completion Celebration -->
+            {% if task.progress_percent == 100 %}
+            <div class="card shadow-lg border-success">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-trophy fa-4x text-warning mb-3"></i>
+                    <h3 class="text-success mb-2">Task Completed!</h3>
+                    <p class="text-muted mb-4">Congratulations on finishing this task. Keep up the great work!</p>
+                    <a href="{{ url_for('tasks') }}" class="btn btn-success">
+                        <i class="fas fa-tasks me-2"></i> View All Tasks
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Sync slider and number input
+    function updateProgressValue(value) {
+        document.getElementById('progress_value_display').value = value;
+        document.getElementById('progress_percent').value = value;
+    }
+
+    function updateProgressSlider(value) {
+        const numValue = parseInt(value);
+        if (numValue >= 0 && numValue <= 100) {
+            document.getElementById('progress_percent').value = numValue;
+            document.getElementById('progress_value_display').value = numValue;
+        }
+    }
+
+    function setProgress(value) {
+        document.getElementById('progress_percent').value = value;
+        document.getElementById('progress_value_display').value = value;
+    }
+</script>
+{% endblock %}

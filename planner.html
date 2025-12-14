@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3"><i class="fas fa-stream me-2"></i>Generated Study Flow Plan</h2>
+    <p class="text-muted">A structured schedule based on your task hours, priorities, and deadlines.</p>
+
+    {% if study_plan %}
+        {% for date, sessions in study_plan.items() %}
+            <div class="card mb-4 shadow">
+                <div class="card-header planner-header">
+                    <h4 class="mb-0 text-white">
+                        {{ date.strftime('%A, %B %d, %Y') }}
+                    </h4>
+                    <p class="mb-0"><small>Total estimated study time: 
+                        <span class="badge bg-light text-dark fw-bold">
+                            {{ sessions | map(attribute='duration') | sum | round(1) }} hours
+                        </span>
+                    </small></p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for session in sessions %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge rounded-pill me-3 
+                                    {% if session.priority == 'High' %} bg-danger
+                                    {% elif session.priority == 'Medium' %} bg-warning text-dark
+                                    {% else %} bg-success
+                                    {% endif %}">
+                                    {{ session.priority }}
+                                </span>
+                                
+                                <strong>{{ session.title }}</strong> ({{ session.subject }})
+                                <small class="text-muted ms-3">Due: {{ session.due_date }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill p-2">
+                                <i class="far fa-clock me-1"></i> {{ session.duration }} Hrs
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info text-center mt-5 shadow-sm">
+            <i class="fas fa-info-circle me-2"></i>
+            No active tasks to generate a plan. Add some tasks with estimated hours and a future due date to start planning your flow!
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
